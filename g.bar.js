@@ -140,7 +140,7 @@
      */
     function VBarchart(paper, x, y, width, height, values, opts) {
         opts = opts || {};
-
+    	
         var chartinst = this,
             type = opts.type || "square",
             gutter = parseFloat(opts.gutter || "20%"),
@@ -153,7 +153,6 @@
             multi = 0,
             colors = opts.colors || chartinst.colors,
             len = values.length;
-
         if (Raphael.is(values[0], "array")) {
             total = [];
             multi = len;
@@ -299,7 +298,7 @@
                         if (j == multi - 1) {
                             var label = paper.labelise(labels[i], tot, total);
 
-                            L = paper.text(bars[i * (multi || 1) + j].x, y + height - barvgutter / 2, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
+                            L = paper.text(bars[j][i].x, y + height - barvgutter / 2, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
 
                             var bb = L.getBBox();
 
@@ -315,10 +314,10 @@
             } else {
                 for (var i = 0; i < len; i++) {
                     for (var j = 0; j < (multi || 1); j++) {
-                        var label = paper.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
-
-                        L = paper.text(bars[i * (multi || 1) + j].x, isBottom ? y + height - barvgutter / 2 : bars[i * (multi || 1) + j].y - 10, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
-
+                    	// modified from paper.labelise to chartinst.labelise
+                    	// txtattr to chartinst.txtattr
+                        var label = chartinst.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
+                        L = paper.text(bars[j][i].x, isBottom ? y + height - barvgutter / 2 : bars[j][i].y -10 , label).attr(chartinst.txtattr).insertBefore(covers[i * (multi || 1) + j]);
                         var bb = L.getBBox();
 
                         if (bb.x - 7 < l) {
@@ -380,6 +379,11 @@
             covers2.show();
             covers2.click(f);
             return this;
+        };
+
+        chart.setTextAttribute = function(txtattr){
+        	chartinst.txtattr = txtattr || { font: "12px Arial", fill:'black'} ;
+        	return this;
         };
 
         chart.push(bars, covers, covers2);
@@ -532,17 +536,17 @@
 
             for (var i = 0; i < len; i++) {
                 for (var j = 0; j < multi; j++) {
-                    var  label = paper.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total),
-                        X = isRight ? bars[i * (multi || 1) + j].x - barheight / 2 + 3 : x + 5,
+                    var  label = chartinst.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total),
+                        X = isRight ? bars[j][i].x - barheight / 2 + 3 : x + 5,
                         A = isRight ? "end" : "start",
                         L;
 
-                    this.labels.push(L = paper.text(X, bars[i * (multi || 1) + j].y, label).attr(txtattr).attr({ "text-anchor": A }).insertBefore(covers[0]));
+                    this.labels.push(L = paper.text(X, bars[j][i].y, label).attr(chartinst.txtattr).attr({ "text-anchor": A }).insertBefore(covers[0]));
 
                     if (L.getBBox().x < x + 5) {
                         L.attr({x: x + 5, "text-anchor": "start"});
                     } else {
-                        bars[i * (multi || 1) + j].label = L;
+                        bars[j][i].label = L;
                     }
                 }
             }
@@ -598,6 +602,11 @@
             covers2.show();
             covers2.click(f);
             return this;
+        };
+
+        chart.setTextAttribute = function(txtattr){
+        	chartinst.txtattr = txtattr || { font: "12px Arial", fill:'black'} ;
+        	return this;
         };
 
         chart.push(bars, covers, covers2);
