@@ -296,10 +296,13 @@
                         tot += multi ? values[j][i] : values[i];
 
                         if (j == multi - 1) {
-                            var label = paper.labelise(labels[i], tot, total);
+                        	// modified from paper.labelise to chartinst.labelise
+                    		// txtattr to chartinst.txtattr
 
-                            L = paper.text(bars[j][i].x, y + height - barvgutter / 2, label).attr(txtattr).insertBefore(covers[i * (multi || 1) + j]);
-
+                            //var label = chartinst.labelise(labels[i], tot, total);
+                            var label = chartinst.labelise(multi ? labels[j] && labels[j][i] : labels[i], multi ? values[j][i] : values[i], total);
+                            // L = paper.text(bars[j][i].x, y + height - barvgutter / 2, label).attr(chartinst.txtattr).insertBefore(covers[i * (multi || 1) + j]);
+                            L = paper.text(bars[j][i].x, isBottom ? y + height - barvgutter / 2 : bars[j][i].y -10 , label).attr(chartinst.txtattr).insertBefore(covers[i * (multi || 1) + j]);
                             var bb = L.getBBox();
 
                             if (bb.x - 7 < l) {
@@ -385,6 +388,47 @@
         	chartinst.txtattr = txtattr || { font: "12px Arial", fill:'black'} ;
         	return this;
         };
+
+        /* adding legend function to bar chart - currently does not work*/
+        var legend = function (labels, otherslabel, mark, dir) {
+            // var x = cx + r + r / 5,
+            //     y = cy,
+            //     h = y + 10;
+            var x = 10,y = 10,h = 20;
+
+            labels = labels || [];
+            dir = (dir && dir.toLowerCase && dir.toLowerCase()) || "south";
+            mark = paper[mark && mark.toLowerCase()] || "circle";
+            chart.labels = paper.set();            
+            for (var i = 0; i < len; i++) {
+                var clr = covers[i].attr("fill"),
+                    j = values[i].order,
+                    txt;
+                
+                values[i].others && (labels[j] = otherslabel || "Others");
+                labels[j] = chartinst.labelise(labels[j], values[i], total);
+                chart.labels.push(paper.set());
+                chart.labels[i].push(paper[mark](x + 5, h, 5).attr({ fill: clr, stroke: "none" }));
+                chart.labels[i].push(txt = paper.text(x + 20, h, labels[j] || values[j]).attr(chartinst.txtattr).attr({ fill: opts.legendcolor || "#000", "text-anchor": "start"}));
+                covers[i].label = chart.labels[i];
+                h += txt.getBBox().height * 1.2;
+            }
+
+            var bb = chart.labels.getBBox(),
+                tr = {
+                    east: [0, -bb.height / 2],
+                    west: [-bb.width - 2 * r - 20, -bb.height / 2],
+                    north: [-r - bb.width / 2, -r - bb.height - 10],
+                    south: [-r - bb.width / 2, r + 10]
+                }[dir];
+
+            chart.labels.translate.apply(chart.labels, tr);
+            chart.push(chart.labels);
+        };
+
+        if (opts.legend) {
+            legend(opts.legend, opts.legendothers, opts.legendmark, opts.legendpos);
+        }
 
         chart.push(bars, covers, covers2);
         chart.bars = bars;
